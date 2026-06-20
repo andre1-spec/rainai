@@ -62,6 +62,7 @@ function App() {
       <MapBackground 
         targetLocation={targetLocation} 
         showScanner={flowState === 'scanning' || flowState === 'revealing' || flowState === 'optimizing' || flowState === 'done'} 
+        flowState={flowState}
       />
       
       <Logo />

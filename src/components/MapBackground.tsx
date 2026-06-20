@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, useMap, Polygon } from 'react-leaflet';
 interface MapBackgroundProps {
   targetLocation: [number, number] | null;
   showScanner: boolean;
+  flowState?: string;
 }
 
 // Map hook to handle flying to the location
@@ -38,22 +39,28 @@ const getBuildingPolygon = (center: [number, number]): [number, number][] => {
   ];
 };
 
-export const MapBackground: React.FC<MapBackgroundProps> = ({ targetLocation, showScanner }) => {
+export const MapBackground: React.FC<MapBackgroundProps> = ({ targetLocation, showScanner, flowState }) => {
   // Default view: Center of Essen, Germany (zoomed out slightly)
   const defaultCenter: [number, number] = [51.4556, 7.0116];
   
   return (
-    <div className="absolute inset-0 z-0">
+    <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
+      <style>{`
+        .leaflet-tile-pane {
+          filter: brightness(0.4) contrast(1.2) saturate(0.2); 
+        }
+      `}</style>
       <MapContainer 
         center={defaultCenter} 
         zoom={13} 
         zoomControl={false}
         className="w-full h-full"
       >
-        {/* CartoDB Dark Matter base map */}
+        {/* Esri World Imagery Satellite Map */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='Tiles &copy; Esri'
+          url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+          maxZoom={19}
         />
         
         <LocationController targetLocation={targetLocation} />
@@ -63,11 +70,11 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({ targetLocation, sh
           <Polygon 
             positions={getBuildingPolygon(targetLocation)}
             pathOptions={{
-              color: '#d946ef', // rainai-pink
-              fillColor: '#db2777', // rainai-magenta
-              fillOpacity: 0.2,
+              color: flowState === 'done' ? '#22c55e' : '#d946ef', // green-500 or pink-500
+              fillColor: flowState === 'done' ? '#16a34a' : '#db2777', // green-600 or magenta
+              fillOpacity: 0.3,
               weight: 3,
-              dashArray: '5, 5',
+              dashArray: flowState === 'done' ? '0' : '5, 5',
             }}
           />
         )}
