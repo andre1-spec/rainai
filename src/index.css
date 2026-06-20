@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-rainai-dark: #121212;
+  --color-rainai-darker: #0a0a0a;
+  --color-rainai-panel: rgba(18, 18, 18, 0.85);
+  --color-rainai-pink: #d946ef;
+  --color-rainai-magenta: #db2777;
+  --color-rainai-red: #e11d48;
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-rainai-darker);
+    color: white;
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+}
+
+.leaflet-container {
+  width: 100vw;
+  height: 100vh;
+  background: var(--color-rainai-darker);
+}
+
+.leaflet-control-zoom {
+  display: none !important;
+}
+
+.leaflet-control-attribution {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+.leaflet-control-attribution a {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Radar scan animation */
+@keyframes radar-scan {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-radar {
+  animation: radar-scan 2s linear infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
