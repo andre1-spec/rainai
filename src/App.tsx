@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Logo } from './components/Logo';
 import { SearchBar } from './components/SearchBar';
-import { MapBackground, MapStyleType } from './components/MapBackground';
+import { MapBackground } from './components/MapBackground';
+import type { MapStyleType } from './components/MapBackground';
 import { ScannerOverlay } from './components/ScannerOverlay';
 import { DataPanel } from './components/DataPanel';
 import { ArrowLeft, Map, Moon, Layers } from 'lucide-react';
