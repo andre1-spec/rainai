@@ -1,16 +1,43 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import CountUp from 'react-countup';
-import { CloudRain, CheckCircle2, Zap, ArrowRight } from 'lucide-react';
+import { CloudRain, CheckCircle2, Zap, ArrowRight, Info } from 'lucide-react';
 import type { FlowState } from '../App';
+
+const AnimatedCounter = ({ start, end, duration }: { start: number, end: number, duration: number }) => {
+  const [value, setValue] = useState(start);
+
+  useEffect(() => {
+    let startTime: number;
+    let animationFrame: number;
+
+    const animate = (time: number) => {
+      if (!startTime) startTime = time;
+      const progress = Math.min((time - startTime) / (duration * 1000), 1);
+      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setValue(Math.floor(start + (end - start) * easeProgress));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrame);
+  }, [start, end, duration]);
+
+  return <>{value.toLocaleString()}</>;
+};
 
 interface DataPanelProps {
   isVisible: boolean;
   flowState: FlowState;
+  targetAddress: string;
+  buildingData: { area: number; tax: number };
   onOptimize: () => void;
 }
 
-export const DataPanel: React.FC<DataPanelProps> = ({ isVisible, flowState, onOptimize }) => {
+export const DataPanel: React.FC<DataPanelProps> = ({ isVisible, flowState, targetAddress, buildingData, onOptimize }) => {
   return (
     <AnimatePresence>
       {isVisible && (
@@ -25,20 +52,30 @@ export const DataPanel: React.FC<DataPanelProps> = ({ isVisible, flowState, onOp
             <div className="p-8 flex-1 overflow-y-auto">
               <div className="mb-8">
                 <h2 className="text-sm font-mono text-pink-500 uppercase tracking-widest mb-1">Target Acquired</h2>
-                <h1 className="text-3xl font-bold text-white">Goldschmidtstr. 100</h1>
-                <p className="text-gray-400 mt-1">Essen, Nordrhein-Westfalen</p>
+                <h1 className="text-3xl font-bold text-white leading-tight">{targetAddress.split(',')[0] || "Unknown"}</h1>
+                <p className="text-gray-400 mt-1">{targetAddress.split(',').slice(1).join(',').trim() || "Address details"}</p>
               </div>
 
               <div className="space-y-6">
                 {/* Surface Area Stat */}
                 <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                  <div className="flex items-center space-x-3 mb-3 relative z-10">
-                    <CloudRain className="text-blue-400 w-5 h-5" />
-                    <h3 className="text-gray-400 text-sm uppercase tracking-wider font-semibold">Total Impermeable Area</h3>
+                  <div className="flex justify-between items-start relative z-10">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <CloudRain className="text-blue-400 w-5 h-5" />
+                      <h3 className="text-gray-400 text-sm uppercase tracking-wider font-semibold">Total Impermeable Area</h3>
+                    </div>
+                    <div className="group relative">
+                      <Info className="text-gray-600 w-4 h-4 cursor-help hover:text-gray-400 transition-colors" />
+                      <div className="absolute right-0 w-64 p-3 mt-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl opacity-0 invisible group/tooltip group-hover:opacity-100 group-hover:visible transition-all z-50 text-xs text-gray-300 pointer-events-none">
+                        AI-estimated based on satellite imagery analysis of roof and sealed ground surfaces.
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-baseline space-x-1 relative z-10">
-                    <span className="text-4xl font-mono font-bold text-white">250,000</span>
+                    <span className="text-4xl font-mono font-bold text-white">
+                      {buildingData.area.toLocaleString()}
+                    </span>
                     <span className="text-gray-500 text-lg">m²</span>
                   </div>
                 </div>
@@ -48,22 +85,28 @@ export const DataPanel: React.FC<DataPanelProps> = ({ isVisible, flowState, onOp
                   <div className={`absolute inset-0 bg-gradient-to-br from-pink-500/5 to-rose-500/5 transition-opacity duration-1000 ${flowState === 'done' ? 'opacity-0' : 'opacity-100'}`}></div>
                   <div className={`absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 transition-opacity duration-1000 ${flowState === 'done' ? 'opacity-100' : 'opacity-0'}`}></div>
                   
-                  <div className="flex items-center space-x-3 mb-3 relative z-10">
-                    <Zap className={flowState === 'done' ? 'text-green-400 w-5 h-5' : 'text-pink-500 w-5 h-5'} />
-                    <h3 className="text-gray-400 text-sm uppercase tracking-wider font-semibold">Current Rain Tax</h3>
+                  <div className="flex justify-between items-start relative z-10">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <Zap className={flowState === 'done' ? 'text-green-400 w-5 h-5' : 'text-pink-500 w-5 h-5'} />
+                      <h3 className="text-gray-400 text-sm uppercase tracking-wider font-semibold">Current Rain Tax</h3>
+                    </div>
+                    <div className="group relative">
+                      <Info className="text-gray-600 w-4 h-4 cursor-help hover:text-gray-400 transition-colors" />
+                      <div className="absolute right-0 w-64 p-3 mt-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 text-xs text-gray-300 pointer-events-none">
+                        Calculated using estimated area and average municipal rain tax rates (€2.06/m²).
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="flex items-baseline space-x-2 relative z-10">
                     <span className="text-gray-400 text-2xl font-mono">€</span>
                     <div className="text-5xl font-mono font-bold text-white">
-                      {flowState === 'revealing' && "515,000"}
+                      {flowState === 'revealing' && buildingData.tax.toLocaleString()}
                       {(flowState === 'optimizing' || flowState === 'done') && (
-                        <CountUp 
-                          start={515000} 
+                        <AnimatedCounter 
+                          start={buildingData.tax} 
                           end={0} 
                           duration={2.5} 
-                          separator=","
-                          useEasing={true}
                         />
                       )}
                     </div>
