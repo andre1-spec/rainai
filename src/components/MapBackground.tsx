@@ -19,7 +19,6 @@ interface MapBackgroundProps {
   onSelectPartner: (id: string) => void;
 }
 
-// Map hook to handle flying to the location
 function LocationController({ targetLocation }: { targetLocation: [number, number] | null }) {
   const map = useMap();
   
@@ -32,6 +31,30 @@ function LocationController({ targetLocation }: { targetLocation: [number, numbe
       });
     }
   }, [targetLocation, map]);
+
+  return null;
+}
+
+function PartnerFocusController({ 
+  selectedPartnerId, 
+  partners 
+}: { 
+  selectedPartnerId: string | null, 
+  partners: Partner[] 
+}) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (selectedPartnerId) {
+      const partner = partners.find(p => p.id === selectedPartnerId);
+      if (partner) {
+        map.flyTo(partner.coordinates, 19, {
+          duration: 1.5,
+          easeLinearity: 0.25
+        });
+      }
+    }
+  }, [selectedPartnerId, partners, map]);
 
   return null;
 }
@@ -139,6 +162,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
         />
         
         <LocationController targetLocation={targetLocation} />
+        <PartnerFocusController selectedPartnerId={selectedPartnerId} partners={partners} />
         <MapEventsHandler 
           onMapClick={onMapClick} 
           onBoundsChange={(bounds) => {
@@ -174,14 +198,26 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
           });
 
           return (
-            <Marker 
-              key={partner.id} 
-              position={partner.coordinates} 
-              icon={icon}
-              eventHandlers={{
-                click: () => onSelectPartner(partner.id)
-              }}
-            />
+            <React.Fragment key={partner.id}>
+              <Marker 
+                position={partner.coordinates} 
+                icon={icon}
+                eventHandlers={{
+                  click: () => onSelectPartner(partner.id)
+                }}
+              />
+              {isSelected && (
+                <Polygon 
+                  positions={getFallbackPolygon(partner.coordinates)}
+                  pathOptions={{
+                    color: '#22c55e', // green-500
+                    fillColor: '#16a34a', // green-600
+                    fillOpacity: 0.4,
+                    weight: 3,
+                  }}
+                />
+              )}
+            </React.Fragment>
           );
         })}
         
