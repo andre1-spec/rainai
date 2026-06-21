@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, useMap, Polygon, useMapEvents, Marker } from 'react-leaflet';
 import L from 'leaflet';
-import { Partner, generatePartnersInBounds } from '../utils/partnerGenerator';
+import { generatePartnersInBounds } from '../utils/partnerGenerator';
+import type { Partner } from '../utils/partnerGenerator';
 
 export type MapStyleType = 'satellite' | 'dark' | 'street';
 

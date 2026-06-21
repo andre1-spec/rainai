@@ -20,7 +20,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectAddress, isHidden 
   const [results, setResults] = useState<SearchResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (query.trim().length < 3) {

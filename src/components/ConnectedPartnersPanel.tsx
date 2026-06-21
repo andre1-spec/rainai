@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Partner } from '../utils/partnerGenerator';
+import type { Partner } from '../utils/partnerGenerator';
 import { Building2, Store, Fuel, School, Home, ChevronUp, ChevronDown, Zap, Shield, Leaf } from 'lucide-react';
 import clsx from 'clsx';
 

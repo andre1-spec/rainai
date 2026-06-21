@@ -6,7 +6,7 @@ import type { MapStyleType } from './components/MapBackground';
 import { ScannerOverlay } from './components/ScannerOverlay';
 import { DataPanel } from './components/DataPanel';
 import { ConnectedPartnersPanel } from './components/ConnectedPartnersPanel';
-import { Partner } from './utils/partnerGenerator';
+import type { Partner } from './utils/partnerGenerator';
 import { ArrowLeft, Map, Moon, Layers } from 'lucide-react';
 import area from '@turf/area';
 import { polygon } from '@turf/helpers';
