@@ -35,29 +35,7 @@ function LocationController({ targetLocation }: { targetLocation: [number, numbe
   return null;
 }
 
-function PartnerFocusController({ 
-  selectedPartnerId, 
-  partners 
-}: { 
-  selectedPartnerId: string | null, 
-  partners: Partner[] 
-}) {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (selectedPartnerId) {
-      const partner = partners.find(p => p.id === selectedPartnerId);
-      if (partner) {
-        map.flyTo(partner.coordinates, 19, {
-          duration: 1.5,
-          easeLinearity: 0.25
-        });
-      }
-    }
-  }, [selectedPartnerId, partners, map]);
-
-  return null;
-}
+// PartnerFocusController removed: flyTo now happens directly on Marker click
 
 function MapEventsHandler({ 
   onMapClick, 
@@ -86,6 +64,81 @@ function MapEventsHandler({
   }, [map, onBoundsChange]);
 
   return null;
+}
+
+function PartnersLayer({
+  partners,
+  selectedPartnerId,
+  onSelectPartner
+}: {
+  partners: Partner[];
+  selectedPartnerId: string | null;
+  onSelectPartner: (id: string) => void;
+}) {
+  const map = useMap();
+
+  return (
+    <>
+      {partners.map(partner => {
+        const isSelected = partner.id === selectedPartnerId;
+        const colorClass = partner.type === 'company' ? 'bg-blue-500 text-white' :
+                          partner.type === 'shop' ? 'bg-purple-500 text-white' :
+                          partner.type === 'gas_station' ? 'bg-orange-500 text-white' :
+                          partner.type === 'school' ? 'bg-yellow-500 text-white' :
+                          'bg-green-500 text-white'; // house
+                          
+        const iconHtml = `
+          <div class="partner-marker ${isSelected ? 'selected' : ''}">
+            <div class="partner-logo ${colorClass}">
+              ${partner.logoText}
+            </div>
+          </div>
+        `;
+        
+        const icon = L.divIcon({
+          html: iconHtml,
+          className: 'custom-partner-icon',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
+        });
+
+        return (
+          <React.Fragment key={partner.id}>
+            <Marker 
+              position={partner.coordinates} 
+              icon={icon}
+              zIndexOffset={isSelected ? 1000 : 0}
+              eventHandlers={{
+                click: (e) => {
+                  const originalEvent = e.originalEvent || (e as any).event;
+                  if (originalEvent) {
+                    L.DomEvent.stopPropagation(originalEvent);
+                  }
+                  onSelectPartner(partner.id);
+                  // Fly ONLY when the marker is clicked (not the card)
+                  map.flyTo(partner.coordinates, 19, {
+                    duration: 1.5,
+                    easeLinearity: 0.25
+                  });
+                }
+              }}
+            />
+            {isSelected && (
+              <Polygon 
+                positions={getFallbackPolygon(partner.coordinates)}
+                pathOptions={{
+                  color: '#4ade80', // green-400 (bright)
+                  fillColor: '#22c55e', // green-500
+                  fillOpacity: 0.5,
+                  weight: 4,
+                }}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
 }
 
 // Mock building polygon coordinates (fallback)
@@ -162,7 +215,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
         />
         
         <LocationController targetLocation={targetLocation} />
-        <PartnerFocusController selectedPartnerId={selectedPartnerId} partners={partners} />
+        
         <MapEventsHandler 
           onMapClick={onMapClick} 
           onBoundsChange={(bounds) => {
@@ -174,59 +227,11 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
         />
         
         {/* Render partners */}
-        {partners.map(partner => {
-          const isSelected = partner.id === selectedPartnerId;
-          const colorClass = partner.type === 'company' ? 'bg-blue-500 text-white' :
-                            partner.type === 'shop' ? 'bg-purple-500 text-white' :
-                            partner.type === 'gas_station' ? 'bg-orange-500 text-white' :
-                            partner.type === 'school' ? 'bg-yellow-500 text-white' :
-                            'bg-green-500 text-white'; // house
-                            
-          const iconHtml = `
-            <div class="partner-marker ${isSelected ? 'selected' : ''}">
-              <div class="partner-logo ${colorClass}">
-                ${partner.logoText}
-              </div>
-            </div>
-          `;
-          
-          const icon = L.divIcon({
-            html: iconHtml,
-            className: 'custom-partner-icon',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
-          });
-
-          return (
-            <React.Fragment key={partner.id}>
-              <Marker 
-                position={partner.coordinates} 
-                icon={icon}
-                zIndexOffset={isSelected ? 1000 : 0}
-                eventHandlers={{
-                  click: (e) => {
-                    const originalEvent = e.originalEvent || (e as any).event;
-                    if (originalEvent) {
-                      L.DomEvent.stopPropagation(originalEvent);
-                    }
-                    onSelectPartner(partner.id);
-                  }
-                }}
-              />
-              {isSelected && (
-                <Polygon 
-                  positions={getFallbackPolygon(partner.coordinates)}
-                  pathOptions={{
-                    color: '#4ade80', // green-400 (bright)
-                    fillColor: '#22c55e', // green-500
-                    fillOpacity: 0.5,
-                    weight: 4,
-                  }}
-                />
-              )}
-            </React.Fragment>
-          );
-        })}
+        <PartnersLayer 
+          partners={partners} 
+          selectedPartnerId={selectedPartnerId} 
+          onSelectPartner={onSelectPartner} 
+        />
         
         {/* Render the building polygon when scanning */}
         {showScanner && polygonToRender.length > 0 && (
