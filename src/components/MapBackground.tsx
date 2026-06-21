@@ -25,8 +25,9 @@ function LocationController({ targetLocation }: { targetLocation: [number, numbe
   useEffect(() => {
     if (targetLocation) {
       // Fly to the location with a smooth animation and high zoom
+      // Fly to the location with a snappier animation
       map.flyTo(targetLocation, 19, {
-        duration: 2.5,
+        duration: 1.0,
         easeLinearity: 0.25
       });
     }
@@ -46,6 +47,12 @@ function MapEventsHandler({
 }) {
   const map = useMapEvents({
     click(e) {
+      // Prevent triggering map click if we clicked a marker
+      const target = e.originalEvent.target as HTMLElement;
+      if (target && typeof target.closest === 'function' && target.closest('.partner-marker')) {
+        return;
+      }
+      
       if (onMapClick) {
         onMapClick(e.latlng.lat, e.latlng.lng);
       }
@@ -82,7 +89,7 @@ function PartnersLayer({
       const partner = partners.find(p => p.id === selectedPartnerId);
       if (partner) {
         map.flyTo(partner.coordinates, 19, {
-          duration: 1.5,
+          duration: 0.5, // fast, snappy movement
           easeLinearity: 0.25
         });
       }
@@ -121,11 +128,7 @@ function PartnersLayer({
               icon={icon}
               zIndexOffset={isSelected ? 1000 : 0}
               eventHandlers={{
-                click: (e) => {
-                  const originalEvent = e.originalEvent || (e as any).event;
-                  if (originalEvent) {
-                    L.DomEvent.stopPropagation(originalEvent);
-                  }
+                click: () => {
                   onSelectPartner(partner.id);
                 }
               }}

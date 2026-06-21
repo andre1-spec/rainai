@@ -86,16 +86,16 @@ function App() {
       })
       .catch(err => console.error("Failed to fetch building polygon", err));
 
-    // Wait for zoom to finish (2.5s) then start scanning
+    // Wait for zoom to finish (1s) then start scanning
     setTimeout(() => {
       setFlowState('scanning');
       
-      // Fake API request delay (3s)
+      // Fake API request delay (2s)
       setTimeout(() => {
         setFlowState('revealing');
-      }, 3000);
+      }, 2000);
       
-    }, 2500);
+    }, 1000);
   };
 
   const startFlow = (lat: number, lon: number, addressName: string) => {
