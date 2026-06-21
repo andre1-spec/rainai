@@ -91,7 +91,7 @@ export const ConnectedPartnersPanel: React.FC<ConnectedPartnersPanelProps> = ({
                 className={clsx(
                   "flex-shrink-0 w-80 rounded-2xl border p-5 cursor-pointer transition-all duration-300 flex flex-col relative overflow-hidden group",
                   isSelected 
-                    ? "border-pink-500/50 bg-gradient-to-br from-pink-500/10 to-purple-500/10 shadow-[0_0_30px_rgba(219,39,119,0.2)] transform -translate-y-2" 
+                    ? "border-pink-500 bg-gradient-to-br from-pink-500/20 to-purple-500/20 shadow-[0_0_25px_rgba(219,39,119,0.5)] transform -translate-y-2" 
                     : "border-gray-800 bg-[#1a1a1a]/50 hover:border-gray-600 hover:bg-[#1a1a1a]"
                 )}
               >

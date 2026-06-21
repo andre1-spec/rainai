@@ -202,18 +202,25 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
               <Marker 
                 position={partner.coordinates} 
                 icon={icon}
+                zIndexOffset={isSelected ? 1000 : 0}
                 eventHandlers={{
-                  click: () => onSelectPartner(partner.id)
+                  click: (e) => {
+                    const originalEvent = e.originalEvent || (e as any).event;
+                    if (originalEvent) {
+                      L.DomEvent.stopPropagation(originalEvent);
+                    }
+                    onSelectPartner(partner.id);
+                  }
                 }}
               />
               {isSelected && (
                 <Polygon 
                   positions={getFallbackPolygon(partner.coordinates)}
                   pathOptions={{
-                    color: '#22c55e', // green-500
-                    fillColor: '#16a34a', // green-600
-                    fillOpacity: 0.4,
-                    weight: 3,
+                    color: '#4ade80', // green-400 (bright)
+                    fillColor: '#22c55e', // green-500
+                    fillOpacity: 0.5,
+                    weight: 4,
                   }}
                 />
               )}

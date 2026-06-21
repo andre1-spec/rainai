@@ -104,7 +104,7 @@
 }
 
 .partner-marker.selected {
-  box-shadow: 0 0 0 3px var(--color-rainai-pink), 0 8px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 0 0 3px var(--color-rainai-pink), 0 0 20px 8px rgba(217, 70, 239, 0.6), 0 8px 20px rgba(0,0,0,0.6);
 }
 
 .partner-logo {
