@@ -6,6 +6,8 @@ import type { MapStyleType } from './components/MapBackground';
 import { ScannerOverlay } from './components/ScannerOverlay';
 import { DataPanel } from './components/DataPanel';
 import { ArrowLeft, Map, Moon, Layers } from 'lucide-react';
+import area from '@turf/area';
+import { polygon } from '@turf/helpers';
 
 export type FlowState = 'idle' | 'zooming' | 'scanning' | 'revealing' | 'optimizing' | 'done';
 
@@ -19,7 +21,7 @@ function App() {
   const [targetLocation, setTargetLocation] = useState<[number, number] | null>(null);
   const [targetPolygon, setTargetPolygon] = useState<[number, number][] | null>(null);
   const [targetAddress, setTargetAddress] = useState<string>('');
-  const [buildingData, setBuildingData] = useState<BuildingData>({ area: 250000, tax: 515000 });
+  const [buildingData, setBuildingData] = useState<BuildingData>({ area: 0, tax: 0 });
   const [mapStyle, setMapStyle] = useState<MapStyleType>('satellite');
 
   const fetchBuildingData = (lat: number, lon: number, addressName?: string) => {
@@ -32,26 +34,46 @@ function App() {
       setTargetAddress(prev => prev ? prev : 'Custom Selection');
     }
 
-    // Fetch real building footprint from OSM Overpass API
-    const query = `[out:json];way(around:50, ${lat}, ${lon})[building];out geom;`;
+    // Default fallback values if no building is found
+    let finalArea = 150; 
+    let finalTax = Math.round(finalArea * 2.06);
+    setBuildingData({ area: finalArea, tax: finalTax });
+
+    // Fetch real building footprint from OSM Overpass API with tighter radius (15m instead of 50m)
+    const query = `[out:json];way(around:15, ${lat}, ${lon})[building];out geom;`;
     fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
       .then(res => res.json())
       .then(data => {
         if (data.elements && data.elements.length > 0) {
           const building = data.elements[0];
           if (building.geometry) {
-            const polygon = building.geometry.map((pt: any) => [pt.lat, pt.lon] as [number, number]);
-            setTargetPolygon(polygon);
+            const polyCoords = building.geometry.map((pt: any) => [pt.lat, pt.lon] as [number, number]);
+            setTargetPolygon(polyCoords);
+
+            try {
+              // Calculate real area using Turf.js
+              // Turf expects coordinates in [lon, lat] format
+              let turfCoords = building.geometry.map((pt: any) => [pt.lon, pt.lat]);
+              
+              // Ensure the polygon is closed (first and last point must be identical)
+              if (turfCoords[0][0] !== turfCoords[turfCoords.length - 1][0] || 
+                  turfCoords[0][1] !== turfCoords[turfCoords.length - 1][1]) {
+                turfCoords.push([...turfCoords[0]]);
+              }
+              
+              const turfPoly = polygon([turfCoords]);
+              const realArea = Math.round(area(turfPoly));
+              const taxRate = 2.06;
+              const realTax = Math.round(realArea * taxRate);
+              
+              setBuildingData({ area: realArea, tax: realTax });
+            } catch (err) {
+              console.error("Failed to calculate building area", err);
+            }
           }
         }
       })
       .catch(err => console.error("Failed to fetch building polygon", err));
-
-    // Generate pseudo-random realistic values for this specific address
-    const randomArea = Math.floor(Math.random() * 450000) + 20000;
-    const taxRate = 2.06; // Estimated rain tax rate €/m²
-    const randomTax = Math.floor(randomArea * taxRate);
-    setBuildingData({ area: randomArea, tax: randomTax });
 
     // Wait for zoom to finish (2.5s) then start scanning
     setTimeout(() => {
