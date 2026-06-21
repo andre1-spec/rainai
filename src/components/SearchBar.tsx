@@ -68,7 +68,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectAddress, isHidden 
     >
       <div className="relative group">
         {/* Glow effect */}
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 via-purple-600 to-rose-600 rounded-2xl blur opacity-70 animate-pulse transition duration-1000 group-hover:opacity-100"></div>
         
         <div className="relative bg-[#121212]/90 backdrop-blur-md border border-gray-800 rounded-2xl shadow-2xl flex items-center p-3">
           {isLoading ? (
@@ -78,8 +78,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectAddress, isHidden 
           )}
           <input
             type="text"
-            className="w-full bg-transparent border-none outline-none text-white px-4 py-2 text-lg placeholder-gray-500 font-sans"
-            placeholder="Search building address..."
+            className="w-full bg-transparent border-none outline-none text-white px-4 py-2 text-lg placeholder-gray-400 font-sans font-medium"
+            placeholder="Start typing your address..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => {

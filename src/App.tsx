@@ -5,6 +5,8 @@ import { MapBackground } from './components/MapBackground';
 import type { MapStyleType } from './components/MapBackground';
 import { ScannerOverlay } from './components/ScannerOverlay';
 import { DataPanel } from './components/DataPanel';
+import { ConnectedPartnersPanel } from './components/ConnectedPartnersPanel';
+import { Partner } from './utils/partnerGenerator';
 import { ArrowLeft, Map, Moon, Layers } from 'lucide-react';
 import area from '@turf/area';
 import { polygon } from '@turf/helpers';
@@ -23,6 +25,11 @@ function App() {
   const [targetAddress, setTargetAddress] = useState<string>('');
   const [buildingData, setBuildingData] = useState<BuildingData>({ area: 0, tax: 0 });
   const [mapStyle, setMapStyle] = useState<MapStyleType>('satellite');
+  
+  // Partner state
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+  const [isPanelExpanded, setIsPanelExpanded] = useState<boolean>(false);
 
   const fetchBuildingData = (lat: number, lon: number, addressName?: string) => {
     setFlowState('zooming');
@@ -33,6 +40,10 @@ function App() {
     } else {
       setTargetAddress(prev => prev ? prev : 'Custom Selection');
     }
+
+    // Hide panel when a new search starts
+    setIsPanelExpanded(false);
+    setSelectedPartnerId(null);
 
     // Default fallback values if no building is found
     let finalArea = 150; 
@@ -110,6 +121,8 @@ function App() {
     setTargetLocation(null);
     setTargetPolygon(null);
     setTargetAddress('');
+    setIsPanelExpanded(false);
+    setSelectedPartnerId(null);
   };
 
   return (
@@ -121,6 +134,13 @@ function App() {
         flowState={flowState}
         mapStyle={mapStyle}
         onMapClick={flowState !== 'idle' ? handleMapClick : undefined}
+        partners={partners}
+        onPartnersChange={setPartners}
+        selectedPartnerId={selectedPartnerId}
+        onSelectPartner={(id) => {
+          setSelectedPartnerId(id);
+          setIsPanelExpanded(true);
+        }}
       />
       
       <Logo />
@@ -140,6 +160,15 @@ function App() {
         targetAddress={targetAddress}
         buildingData={buildingData}
         onOptimize={handleOptimize}
+      />
+
+      <ConnectedPartnersPanel 
+        partners={partners}
+        selectedPartnerId={selectedPartnerId}
+        onSelectPartner={setSelectedPartnerId}
+        isVisible={flowState === 'idle'} // Only show bottom sheet when idle
+        isExpanded={isPanelExpanded}
+        onToggleExpand={() => setIsPanelExpanded(prev => !prev)}
       />
 
       {/* Back Button */}

@@ -1,5 +1,7 @@
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, useMap, Polygon, useMapEvents } from 'react-leaflet';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, useMap, Polygon, useMapEvents, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import { Partner, generatePartnersInBounds } from '../utils/partnerGenerator';
 
 export type MapStyleType = 'satellite' | 'dark' | 'street';
 
@@ -10,6 +12,10 @@ interface MapBackgroundProps {
   flowState?: string;
   mapStyle: MapStyleType;
   onMapClick?: (lat: number, lng: number) => void;
+  partners: Partner[];
+  onPartnersChange: (partners: Partner[]) => void;
+  selectedPartnerId: string | null;
+  onSelectPartner: (id: string) => void;
 }
 
 // Map hook to handle flying to the location
@@ -29,14 +35,32 @@ function LocationController({ targetLocation }: { targetLocation: [number, numbe
   return null;
 }
 
-function ClickHandler({ onMapClick }: { onMapClick?: (lat: number, lng: number) => void }) {
-  useMapEvents({
+function MapEventsHandler({ 
+  onMapClick, 
+  onBoundsChange 
+}: { 
+  onMapClick?: (lat: number, lng: number) => void,
+  onBoundsChange: (bounds: L.LatLngBounds) => void
+}) {
+  const map = useMapEvents({
     click(e) {
       if (onMapClick) {
         onMapClick(e.latlng.lat, e.latlng.lng);
       }
+    },
+    moveend() {
+      onBoundsChange(map.getBounds());
+    },
+    zoomend() {
+      onBoundsChange(map.getBounds());
     }
   });
+
+  // Initial load
+  useEffect(() => {
+    onBoundsChange(map.getBounds());
+  }, [map, onBoundsChange]);
+
   return null;
 }
 
@@ -54,7 +78,18 @@ const getFallbackPolygon = (center: [number, number]): [number, number][] => {
   ];
 };
 
-export const MapBackground: React.FC<MapBackgroundProps> = ({ targetLocation, targetPolygon, showScanner, flowState, mapStyle, onMapClick }) => {
+export const MapBackground: React.FC<MapBackgroundProps> = ({ 
+  targetLocation, 
+  targetPolygon, 
+  showScanner, 
+  flowState, 
+  mapStyle, 
+  onMapClick,
+  partners,
+  onPartnersChange,
+  selectedPartnerId,
+  onSelectPartner
+}) => {
   // Default view: Center of Essen, Germany (zoomed out slightly)
   const defaultCenter: [number, number] = [51.4556, 7.0116];
   
@@ -103,7 +138,51 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({ targetLocation, ta
         />
         
         <LocationController targetLocation={targetLocation} />
-        <ClickHandler onMapClick={onMapClick} />
+        <MapEventsHandler 
+          onMapClick={onMapClick} 
+          onBoundsChange={(bounds) => {
+            const sw = bounds.getSouthWest();
+            const ne = bounds.getNorthEast();
+            const newPartners = generatePartnersInBounds([sw.lat, sw.lng], [ne.lat, ne.lng]);
+            onPartnersChange(newPartners);
+          }} 
+        />
+        
+        {/* Render partners */}
+        {partners.map(partner => {
+          const isSelected = partner.id === selectedPartnerId;
+          const colorClass = partner.type === 'company' ? 'bg-blue-500 text-white' :
+                            partner.type === 'shop' ? 'bg-purple-500 text-white' :
+                            partner.type === 'gas_station' ? 'bg-orange-500 text-white' :
+                            partner.type === 'school' ? 'bg-yellow-500 text-white' :
+                            'bg-green-500 text-white'; // house
+                            
+          const iconHtml = `
+            <div class="partner-marker ${isSelected ? 'selected' : ''}">
+              <div class="partner-logo ${colorClass}">
+                ${partner.logoText}
+              </div>
+            </div>
+          `;
+          
+          const icon = L.divIcon({
+            html: iconHtml,
+            className: 'custom-partner-icon',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+          });
+
+          return (
+            <Marker 
+              key={partner.id} 
+              position={partner.coordinates} 
+              icon={icon}
+              eventHandlers={{
+                click: () => onSelectPartner(partner.id)
+              }}
+            />
+          );
+        })}
         
         {/* Render the building polygon when scanning */}
         {showScanner && polygonToRender.length > 0 && (
