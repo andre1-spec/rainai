@@ -77,6 +77,18 @@ function PartnersLayer({
 }) {
   const map = useMap();
 
+  useEffect(() => {
+    if (selectedPartnerId) {
+      const partner = partners.find(p => p.id === selectedPartnerId);
+      if (partner) {
+        map.flyTo(partner.coordinates, 19, {
+          duration: 1.5,
+          easeLinearity: 0.25
+        });
+      }
+    }
+  }, [selectedPartnerId, partners, map]);
+
   return (
     <>
       {partners.map(partner => {
@@ -115,11 +127,6 @@ function PartnersLayer({
                     L.DomEvent.stopPropagation(originalEvent);
                   }
                   onSelectPartner(partner.id);
-                  // Fly ONLY when the marker is clicked (not the card)
-                  map.flyTo(partner.coordinates, 19, {
-                    duration: 1.5,
-                    easeLinearity: 0.25
-                  });
                 }
               }}
             />
